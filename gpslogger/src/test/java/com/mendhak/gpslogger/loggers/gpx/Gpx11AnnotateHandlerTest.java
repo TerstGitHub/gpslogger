@@ -13,11 +13,11 @@ import static org.mockito.Mockito.when;
 
 @SmallTest
 @RunWith(MockitoJUnitRunner.class)
-public class Gpx10AnnotateHandlerTest {
+public class Gpx11AnnotateHandlerTest {
 
     @Test
     public void GetWaypointXml_BasicLocation_BasicWptNodeReturned(){
-        Gpx10AnnotateHandler annotateHandler = new Gpx10AnnotateHandler(null, null, null, null);
+        Gpx11AnnotateHandler annotateHandler = new Gpx11AnnotateHandler(null, null, null, null);
 
 
         Location loc = MockLocations.builder("MOCK", 12.193, 19.111).build();
@@ -34,7 +34,7 @@ public class Gpx10AnnotateHandlerTest {
 
     @Test
     public void GetWaypointXml_LocationWithAltitude_WptNodeWithElevationReturned(){
-        Gpx10AnnotateHandler annotateHandler = new Gpx10AnnotateHandler(null, null, null, null);
+        Gpx11AnnotateHandler annotateHandler = new Gpx11AnnotateHandler(null, null, null, null);
 
         Location loc = MockLocations.builder("MOCK", 12.193, 19.111).withAltitude(9001d).build();
 

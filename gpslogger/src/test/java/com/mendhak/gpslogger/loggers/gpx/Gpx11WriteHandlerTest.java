@@ -14,12 +14,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 @SmallTest
 @RunWith(MockitoJUnitRunner.class)
-public class Gpx10WriteHandlerTest {
+public class Gpx11WriteHandlerTest {
 
     @Test
     public void GetTrackpointXml_BasicLocation_BasicTrkptNodeReturned(){
 
-        Gpx10WriteHandler writeHandler = new Gpx10WriteHandler(null, null, null, false);
+        Gpx11WriteHandler writeHandler = new Gpx11WriteHandler(null, null, null, false);
 
         Location loc = MockLocations.builder("MOCK", 12.193, 19.111).build();
 
@@ -29,26 +29,58 @@ public class Gpx10WriteHandlerTest {
         assertThat("Basic trackpoint XML", actual, is(expected));
     }
 
+    @Test
+    public void GetTrackPointXml_LocationWithSpeed_TrkptWithCustomExtension(){
+
+        Gpx11WriteHandler writeHandler = new Gpx11WriteHandler(null, null, null, false);
+
+        Location loc = MockLocations.builder("MOCK", 12.193,19.111).withSpeed(41f).build();
+
+        String actual = writeHandler.getTrackPointXml(loc, "2011-09-17T18:45:33Z");
+        String expected = "<trkpt lat=\"12.193\" lon=\"19.111\"><time>2011-09-17T18:45:33Z</time>" +
+                "<src>MOCK</src><extensions><gps:speed>41.0</gps:speed></extensions></trkpt>\n</trkseg></trk></gpx>";
+
+        assertThat("Trackpoint XML with all info", actual, is(expected));
+    }
 
     @Test
     public void GetTrackPointXml_LocationWithAltBearingSpeed_TrkptWithEleCourseSpeedReturned(){
 
-        Gpx10WriteHandler writeHandler = new Gpx10WriteHandler(null, null, null, false);
+        Gpx11WriteHandler writeHandler = new Gpx11WriteHandler(null, null, null, false);
 
         Location loc = MockLocations.builder("MOCK", 12.193,19.111).withAltitude(9001d).withBearing(91.88f).withSpeed(188.44f).build();
 
         String actual = writeHandler.getTrackPointXml(loc, "2011-09-17T18:45:33Z");
         String expected = "<trkpt lat=\"12.193\" lon=\"19.111\"><ele>9001.0</ele><time>2011-09-17T18:45:33Z</time>" +
-                "<course>91.88</course><speed>188.44</speed><src>MOCK</src></trkpt>\n</trkseg></trk></gpx>";
+                "<course>91.88</course><src>MOCK</src><extensions><gps:speed>188.44</gps:speed></extensions></trkpt>\n</trkseg></trk></gpx>";
 
         assertThat("Trackpoint XML with all info", actual, is(expected));
     }
 
 
     @Test
+    public void GetTrackPointXml_LocationWithAccuracy_CustomExtensionIncluded(){
+
+        Gpx11WriteHandler writeHandler = new Gpx11WriteHandler(null, null, null, false);
+
+        Location loc = MockLocations.builder("MOCK", 12.193, 19.111)
+                .withAltitude(9001d)
+                .withBearing(91.88f)
+                .withSpeed(188.44f)
+                .withAccuracy(97f)
+                .build();
+
+        String actual = writeHandler.getTrackPointXml(loc, "2011-09-17T18:45:33Z");
+        String expected = "<trkpt lat=\"12.193\" lon=\"19.111\"><ele>9001.0</ele><time>2011-09-17T18:45:33Z</time>" +
+                "<course>91.88</course><src>MOCK</src><extensions><gps:speed>188.44</gps:speed><gps:acc>97.0</gps:acc></extensions></trkpt>\n</trkseg></trk></gpx>";
+
+        assertThat("Trackpoint XML without satellites", actual, is(expected));
+    }
+
+    @Test
     public void GetTrackPointXml_LocationWithoutSatellites_TrkptNodeReturned(){
 
-        Gpx10WriteHandler writeHandler = new Gpx10WriteHandler(null, null, null, false);
+        Gpx11WriteHandler writeHandler = new Gpx11WriteHandler(null, null, null, false);
 
         Location loc = MockLocations.builder("MOCK", 12.193, 19.111)
                 .withAltitude(9001d)
@@ -59,7 +91,7 @@ public class Gpx10WriteHandlerTest {
 
         String actual = writeHandler.getTrackPointXml(loc, "2011-09-17T18:45:33Z");
         String expected = "<trkpt lat=\"12.193\" lon=\"19.111\"><ele>9001.0</ele><time>2011-09-17T18:45:33Z</time>" +
-                "<course>91.88</course><speed>188.44</speed><src>MOCK</src></trkpt>\n</trkseg></trk></gpx>";
+                "<course>91.88</course><src>MOCK</src><extensions><gps:speed>188.44</gps:speed><gps:acc>55.0</gps:acc></extensions></trkpt>\n</trkseg></trk></gpx>";
 
         assertThat("Trackpoint XML without satellites", actual, is(expected));
     }
@@ -77,11 +109,11 @@ public class Gpx10WriteHandlerTest {
                 .putExtra("SATELLITES_FIX",22)
                 .build();
 
-        Gpx10WriteHandler writeHandler = new Gpx10WriteHandler(null, null, null, false);
+        Gpx11WriteHandler writeHandler = new Gpx11WriteHandler(null, null, null, false);
 
         String actual = writeHandler.getTrackPointXml(loc, "2011-09-17T18:45:33Z");
         String expected = "<trkpt lat=\"12.193\" lon=\"19.111\"><ele>9001.0</ele><time>2011-09-17T18:45:33Z</time>" +
-                "<course>91.88</course><speed>188.44</speed><src>MOCK</src><sat>9</sat></trkpt>\n</trkseg></trk></gpx>";
+                "<course>91.88</course><src>MOCK</src><sat>9</sat><extensions><gps:speed>188.44</gps:speed><gps:acc>55.0</gps:acc></extensions></trkpt>\n</trkseg></trk></gpx>";
 
         assertThat("Trackpoint uses satellites used in fix", actual, is(expected));
 
@@ -101,11 +133,11 @@ public class Gpx10WriteHandlerTest {
                 .putExtra("SATELLITES_FIX",22)
                 .build();
 
-        Gpx10WriteHandler writeHandler = new Gpx10WriteHandler(null, null, null, false);
+        Gpx11WriteHandler writeHandler = new Gpx11WriteHandler(null, null, null, false);
 
         String actual = writeHandler.getTrackPointXml(loc, "2011-09-17T18:45:33Z");
         String expected = "<trkpt lat=\"12.193\" lon=\"19.111\"><ele>9001.0</ele><time>2011-09-17T18:45:33Z</time>" +
-                "<course>91.88</course><speed>188.44</speed><src>MOCK</src><sat>22</sat></trkpt>\n</trkseg></trk></gpx>";
+                "<course>91.88</course><src>MOCK</src><sat>22</sat><extensions><gps:speed>188.44</gps:speed><gps:acc>55.0</gps:acc></extensions></trkpt>\n</trkseg></trk></gpx>";
 
         assertThat("Trackpoint uses satellites used in fix", actual, is(expected));
 
@@ -114,7 +146,7 @@ public class Gpx10WriteHandlerTest {
     @Test
     public void GetTrackPointXml_NewTrackSegmentPref_NewTrkSegReturned(){
 
-        Gpx10WriteHandler writeHandler = new Gpx10WriteHandler(null, null, null, true);
+        Gpx11WriteHandler writeHandler = new Gpx11WriteHandler(null, null, null, true);
 
 
         Location loc = MockLocations.builder("MOCK", 12.193, 19.111)
@@ -126,7 +158,7 @@ public class Gpx10WriteHandlerTest {
 
         String actual = writeHandler.getTrackPointXml(loc, "2011-09-17T18:45:33Z");
         String expected = "<trkseg><trkpt lat=\"12.193\" lon=\"19.111\"><ele>9001.0</ele><time>2011-09-17T18:45:33Z</time>" +
-                "<course>91.88</course><speed>188.44</speed><src>MOCK</src></trkpt>\n</trkseg></trk></gpx>";
+                "<course>91.88</course><src>MOCK</src><extensions><gps:speed>188.44</gps:speed></extensions></trkpt>\n</trkseg></trk></gpx>";
 
         assertThat("Trackpoint XML with a new segment", actual, is(expected));
     }
@@ -135,7 +167,7 @@ public class Gpx10WriteHandlerTest {
     @Test
     public void GetTrackPointXml_WhenHDOPPresent_ThenFormattedInXML(){
 
-        Gpx10WriteHandler writeHandler = new Gpx10WriteHandler(null, null, null, true);
+        Gpx11WriteHandler writeHandler = new Gpx11WriteHandler(null, null, null, true);
 
         Location loc = MockLocations.builder("MOCK", 12.193,19.111)
                 .withAltitude(9001d)
@@ -146,7 +178,7 @@ public class Gpx10WriteHandlerTest {
 
         String actual = writeHandler.getTrackPointXml(loc, "2011-09-17T18:45:33Z");
         String expected = "<trkseg><trkpt lat=\"12.193\" lon=\"19.111\"><ele>9001.0</ele><time>2011-09-17T18:45:33Z</time>" +
-                "<course>91.88</course><speed>188.44</speed><src>MOCK</src><hdop>LOOKATTHISHDOP!</hdop></trkpt>\n</trkseg></trk></gpx>";
+                "<course>91.88</course><src>MOCK</src><hdop>LOOKATTHISHDOP!</hdop><extensions><gps:speed>188.44</gps:speed></extensions></trkpt>\n</trkseg></trk></gpx>";
 
         assertThat("Trackpoint XML with an HDOP", actual, is(expected));
     }
@@ -155,7 +187,7 @@ public class Gpx10WriteHandlerTest {
     @Test
     public void GetTrackPointXml_BundledGeoIdHeight_GeoIdHeightNode(){
 
-        Gpx10WriteHandler writeHandler = new Gpx10WriteHandler(null, null, null, true);
+        Gpx11WriteHandler writeHandler = new Gpx11WriteHandler(null, null, null, true);
 
         Location loc = MockLocations.builder("MOCK", 12.193,19.111)
                 .withAltitude(9001d)
@@ -165,7 +197,7 @@ public class Gpx10WriteHandlerTest {
                 .build();
 
         String actual = writeHandler.getTrackPointXml(loc, "2011-09-17T18:45:33Z");
-        String expected = "<trkseg><trkpt lat=\"12.193\" lon=\"19.111\"><ele>9001.0</ele><time>2011-09-17T18:45:33Z</time><course>91.88</course><speed>188.44</speed><geoidheight>MYGEOIDHEIGHT</geoidheight><src>MOCK</src></trkpt>\n</trkseg></trk></gpx>";
+        String expected = "<trkseg><trkpt lat=\"12.193\" lon=\"19.111\"><ele>9001.0</ele><time>2011-09-17T18:45:33Z</time><course>91.88</course><geoidheight>MYGEOIDHEIGHT</geoidheight><src>MOCK</src><extensions><gps:speed>188.44</gps:speed></extensions></trkpt>\n</trkseg></trk></gpx>";
 
         assertThat("Trackpoint XML with a geoid height", actual, is(expected));
     }

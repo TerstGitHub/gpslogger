@@ -33,7 +33,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 
-public class Gpx10FileLogger implements FileLogger {
+public class Gpx11FileLogger implements FileLogger {
     protected final static Object lock = new Object();
 
     private final static ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS,
@@ -42,7 +42,7 @@ public class Gpx10FileLogger implements FileLogger {
     private final boolean addNewTrackSegment;
     protected final String name = "GPX";
 
-    public Gpx10FileLogger(File gpxFile, boolean addNewTrackSegment) {
+    public Gpx11FileLogger(File gpxFile, boolean addNewTrackSegment) {
         this.gpxFile = gpxFile;
         this.addNewTrackSegment = addNewTrackSegment;
     }
@@ -55,7 +55,7 @@ public class Gpx10FileLogger implements FileLogger {
         }
         String dateTimeString = Strings.getIsoDateTime(new Date(time));
 
-        Gpx10WriteHandler writeHandler = new Gpx10WriteHandler(dateTimeString, gpxFile, loc, addNewTrackSegment);
+        Gpx11WriteHandler writeHandler = new Gpx11WriteHandler(dateTimeString, gpxFile, loc, addNewTrackSegment);
         EXECUTOR.execute(writeHandler);
     }
 
@@ -67,7 +67,7 @@ public class Gpx10FileLogger implements FileLogger {
         }
         String dateTimeString = Strings.getIsoDateTime(new Date(time));
 
-        Gpx10AnnotateHandler annotateHandler = new Gpx10AnnotateHandler(description, gpxFile, loc, dateTimeString);
+        Gpx11AnnotateHandler annotateHandler = new Gpx11AnnotateHandler(description, gpxFile, loc, dateTimeString);
         EXECUTOR.execute(annotateHandler);
     }
 
@@ -79,14 +79,14 @@ public class Gpx10FileLogger implements FileLogger {
 
 }
 
-class Gpx10AnnotateHandler implements Runnable {
-    private static final Logger LOG = Logs.of(Gpx10AnnotateHandler.class);
+class Gpx11AnnotateHandler implements Runnable {
+    private static final Logger LOG = Logs.of(Gpx11AnnotateHandler.class);
     String description;
     File gpxFile;
     Location loc;
     String dateTimeString;
 
-    public Gpx10AnnotateHandler(String description, File gpxFile, Location loc, String dateTimeString) {
+    public Gpx11AnnotateHandler(String description, File gpxFile, Location loc, String dateTimeString) {
         this.description = description;
         this.gpxFile = gpxFile;
         this.loc = loc;
@@ -96,7 +96,7 @@ class Gpx10AnnotateHandler implements Runnable {
     @Override
     public void run() {
 
-        synchronized (Gpx10FileLogger.lock) {
+        synchronized (Gpx11FileLogger.lock) {
             if (!gpxFile.exists()) {
                 return;
             }
@@ -105,7 +105,7 @@ class Gpx10AnnotateHandler implements Runnable {
                 return;
             }
 
-            int startPosition = 336;
+            int startPosition = 404;
 
             String wpt = getWaypointXml(loc, dateTimeString, description);
 
@@ -139,9 +139,9 @@ class Gpx10AnnotateHandler implements Runnable {
                 gpxFile.delete();
                 gpxTempFile.renameTo(gpxFile);
 
-                LOG.debug("Finished annotation to GPX10 File");
+                LOG.debug("Finished annotation to Gpx11 File");
             } catch (Exception e) {
-                LOG.error("Gpx10FileLogger.annotate", e);
+                LOG.error("Gpx11FileLogger.annotate", e);
             }
 
         }
@@ -172,14 +172,14 @@ class Gpx10AnnotateHandler implements Runnable {
 }
 
 
-class Gpx10WriteHandler implements Runnable {
-    private static final Logger LOG = Logs.of(Gpx10WriteHandler.class);
+class Gpx11WriteHandler implements Runnable {
+    private static final Logger LOG = Logs.of(Gpx11WriteHandler.class);
     String dateTimeString;
     Location loc;
     private File gpxFile = null;
     private boolean addNewTrackSegment;
 
-    public Gpx10WriteHandler(String dateTimeString, File gpxFile, Location loc, boolean addNewTrackSegment) {
+    public Gpx11WriteHandler(String dateTimeString, File gpxFile, Location loc, boolean addNewTrackSegment) {
         this.dateTimeString = dateTimeString;
         this.addNewTrackSegment = addNewTrackSegment;
         this.gpxFile = gpxFile;
@@ -189,7 +189,7 @@ class Gpx10WriteHandler implements Runnable {
 
     @Override
     public void run() {
-        synchronized (Gpx10FileLogger.lock) {
+        synchronized (Gpx11FileLogger.lock) {
 
             try {
                 if (!gpxFile.exists()) {
@@ -199,13 +199,15 @@ class Gpx10WriteHandler implements Runnable {
                     BufferedOutputStream initialOutput = new BufferedOutputStream(initialWriter);
 
                     StringBuilder initialXml = new StringBuilder();
-                    initialXml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
-                    initialXml.append("<gpx version=\"1.0\" creator=\"GPSLogger - http://gpslogger.mendhak.com/\" ");
+                    initialXml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>").append("\r\n");
+                    initialXml.append("<gpx version=\"1.1\" creator=\"GPSLogger - http://gpslogger.mendhak.com/\" ");
                     initialXml.append("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
-                    initialXml.append("xmlns=\"http://www.topografix.com/GPX/1/0\" ");
-                    initialXml.append("xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 ");
-                    initialXml.append("http://www.topografix.com/GPX/1/0/gpx.xsd\">");
-                    initialXml.append("<time>").append(dateTimeString).append("</time>").append("<trk></trk></gpx>");
+                    initialXml.append("xmlns=\"http://www.topografix.com/GPX/1/1\" ");
+                    initialXml.append("xmlns:gps=\"http://gpslogger.mendhak.com\" ");
+                    initialXml.append("xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 ");
+                    initialXml.append("http://www.topografix.com/GPX/1/1/gpx.xsd\">").append("\r\n");
+                    initialXml.append("<metadata><time>").append(dateTimeString).append("</time></metadata>").append("\r\n");
+                    initialXml.append("<trk></trk></gpx>");
                     initialOutput.write(initialXml.toString().getBytes());
                     initialOutput.flush();
                     initialOutput.close();
@@ -223,10 +225,10 @@ class Gpx10WriteHandler implements Runnable {
                 raf.write(trackPoint.getBytes());
                 raf.close();
                 Files.addToMediaDatabase(gpxFile, "text/plain");
-                LOG.debug("Finished writing to GPX10 file");
+                LOG.debug("Finished writing to Gpx11 file");
 
             } catch (Exception e) {
-                LOG.error("Gpx10FileLogger.write", e);
+                LOG.error("Gpx11FileLogger.write", e);
             }
 
         }
@@ -255,10 +257,6 @@ class Gpx10WriteHandler implements Runnable {
 
         if (loc.hasBearing()) {
             track.append("<course>").append(String.valueOf(loc.getBearing())).append("</course>");
-        }
-
-        if (loc.hasSpeed()) {
-            track.append("<speed>").append(String.valueOf(loc.getSpeed())).append("</speed>");
         }
 
         if (loc.getExtras() != null) {
@@ -306,6 +304,20 @@ class Gpx10WriteHandler implements Runnable {
             if (!Strings.isNullOrEmpty(dgpsid)) {
                 track.append("<dgpsid>").append(dgpsid).append("</dgpsid>");
             }
+        }
+
+
+        if(loc.hasAccuracy() || loc.hasSpeed()){
+            track.append("<extensions>");
+
+            if (loc.hasSpeed()) {
+                track.append("<gps:speed>").append(String.valueOf(loc.getSpeed())).append("</gps:speed>");
+            }
+            if(loc.hasAccuracy()) {
+                track.append("<gps:acc>").append(loc.getAccuracy()).append("</gps:acc>");
+            }
+
+            track.append("</extensions>");
         }
 
 
